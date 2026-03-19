@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniMood — Anime par Mood</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #ff3c6e;
+    --accent2: #7c3aed;
+    --accent3: #06b6d4;
+    --text: #f0f0f5;
+    --muted: #8888aa;
+    --gold: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  nav { display: flex; gap: 0.5rem; }
+
+  nav button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  nav button.active, nav button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(255,60,110,0.08);
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ===== LIST VIEW ===== */
+  .list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: gap;
+    gap: 1rem;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    flex: 1;
+    max-width: 400px;
+  }
+
+  .search-bar input {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    width: 100%;
+  }
+
+  .search-bar span { color: var(--muted); }
+
+  .filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-chip {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .filter-chip.active {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: white;
+  }
+
+  .anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .anime-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .anime-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent2);
+    box-shadow: 0 8px 30px rgba(124,58,237,0.2);
+  }
+
+  .anime-card .thumb {
+    height: 140px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    position: relative;
+  }
+
+  .anime-card .thumb .genre-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .anime-card .info { padding: 0.8rem; }
+
+  .anime-card .info h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    line-height: 1.3;
+  }
+
+  .anime-card .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+
+  .rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--gold);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .episodes {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  .watched-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(6,182,212,0.9);
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+  }
+
+  /* ADD BUTTON */
+  .btn-accent {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: opacity 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .btn-accent:hover { opacity: 0.9; transform: scale(1.02); }
+
+  /* ADD MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 440px;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .form-group { margin-bottom: 0.8rem; }
+
+  .form-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--accent2);
+  }
+
+  .form-group select option { background: var(--card); }
+
+  .star-picker {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .star-picker span { transition: transform 0.1s; }
+  .star-picker span:hover { transform: scale(1.2); }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.2s;
+    flex: 1;
+  }
+
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  /* ===== MOOD VIEW ===== */
+  .mood-section { margin-bottom: 2rem; }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .mood-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .mood-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 1rem 0.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .mood-btn .emoji { font-size: 1.8rem; }
+
+  .mood-btn.selected {
+    border-color: var(--accent);
+    background: rgba(255,60,110,0.1);
+    color: var(--accent);
+  }
+
+  .char-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .char-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .char-btn.selected {
+    border-color: var(--accent2);
+    background: rgba(124,58,237,0.15);
+    color: #a78bfa;
+  }
+
+  .api-key-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
+  .api-key-box input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+  }
+
+  .api-key-box label {
+    color: var(--muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .generate-btn {
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    border: none;
+    color: white;
+    padding: 0.9rem 2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .generate-btn:hover { opacity: 0.9; transform: scale(1.01); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .reco-output {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    min-height: 120px;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    color: var(--text);
+    display: none;
+  }
+
+  .reco-output.visible { display: block; }
+
+  .reco-output h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--accent3);
+    margin-bottom: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .reco-anime {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .reco-anime:last-child { border-bottom: none; }
+
+  .reco-emoji { font-size: 1.5rem; min-width: 36px; text-align: center; }
+
+  .reco-info h4 { font-weight: 700; margin-bottom: 0.2rem; }
+  .reco-info p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 0.5rem 0;
+  }
+
+  .typing-indicator span {
+    width: 8px; height: 8px;
+    background: var(--accent2);
+    border-radius: 50%;
+    animation: bounce 1s infinite;
+  }
+
+  .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  /* ===== STATS VIEW ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem;
+    text-align: center;
+  }
+
+  .stat-card .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .stat-card .stat-label {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+  }
+
+  .genre-bars { display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .genre-bar-row { display: flex; align-items: center; gap: 1rem; }
+
+  .genre-bar-label { width: 100px; font-size: 0.85rem; color: var(--muted); }
+
+  .genre-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .genre-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent3));
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .genre-bar-count { font-size: 0.8rem; color: var(--muted); width: 24px; text-align: right; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--card);
+    border: 1px solid var(--accent3);
+    color: var(--text);
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    z-index: 500;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+
+  .empty-state .big-emoji { font-size: 4rem; margin-bottom: 1rem; }
+  .empty-state p { font-size: 1.05rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">🌸 AniMood</div>
+    <nav>
+      <button class="active" onclick="switchView('list')">📋 Ma Liste</button>
+      <button onclick="switchView('mood')">✨ Mood IA</button>
+      <button onclick="switchView('stats')">📊 Stats</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- LIST VIEW -->
+  <div id="view-list" class="view active">
+    <div class="list-header">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="Rechercher un anime..." oninput="renderList()">
+      </div>
+      <button class="btn-accent" onclick="openModal()">+ Ajouter</button>
+    </div>
+
+    <div class="filters" id="filters">
+      <span class="filter-chip active" onclick="setFilter('all', this)">Tous</span>
+      <span class="filter-chip" onclick="setFilter('Shonen', this)">Shonen</span>
+      <span class="filter-chip" onclick="setFilter('Seinen', this)">Seinen</span>
+      <span class="filter-chip" onclick="setFilter('Isekai', this)">Isekai</span>
+      <span class="filter-chip" onclick="setFilter('Romance', this)">Romance</span>
+      <span class="filter-chip" onclick="setFilter('Horreur', this)">Horreur</span>
+      <span class="filter-chip" onclick="setFilter('Mecha', this)">Mecha</span>
+      <span class="filter-chip" onclick="setFilter('Slice of Life', this)">Slice of Life</span>
+      <span class="filter-chip" onclick="setFilter('Watched', this)">✅ Vu</span>
+    </div>
+
+    <div class="anime-grid" id="animeGrid"></div>
+  </div>
+
+  <!-- MOOD VIEW -->
+  <div id="view-mood" class="view">
+    <div class="mood-section">
+      <div class="section-title">🔑 Clé API Claude (Anthropic)</div>
+      <div class="api-key-box">
+        <label>API Key :</label>
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
+      </div>
+      <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:-0.8rem; margin-bottom:1.5rem;">
+        Obtenez votre clé sur <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent3)">console.anthropic.com</a> — Elle ne quitte pas votre navigateur.
+      </small>
+    </div>
+
+    <div class="mood-section">
+      <div class="section-title">🎭 Ton Mood du Moment</div>
+      <div class="mood-grid" id="moodGrid"></div>
+    </div>
+
+    <div class="mood-section">
+      <div class="section-title">🧠 Ton Caractère</div>
+      <div class="char-grid" id="charGrid"></div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateRecommendations()">
+      ✨ GÉNÉRER MES RECOMMANDATIONS
+    </button>
+
+    <div class="reco-output" id="recoOutput">
+      <div class="typing-indicator" id="typingIndicator">
+        <span></span><span></span><span></span>
+      </div>
+      <div id="recoContent"></div>
+    </div>
+  </div>
+
+  <!-- STATS VIEW -->
+  <div id="view-stats" class="view">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="mood-section">
+      <div class="section-title">📚 Par Genre</div>
+      <div class="genre-bars" id="genreBars"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>Ajouter un Anime</h2>
+    <div class="form-group">
+      <label>Titre</label>
+      <input type="text" id="fTitle" placeholder="ex: Attack on Titan" />
+    </div>
+    <div class="form-group">
+      <label>Genre</label>
+      <select id="fGenre">
+        <option value="Shonen">Shonen</option>
+        <option value="Seinen">Seinen</option>
+        <option value="Isekai">Isekai</option>
+        <option value="Romance">Romance</option>
+        <option value="Horreur">Horreur</option>
+        <option value="Mecha">Mecha</option>
+        <option value="Slice of Life">Slice of Life</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Épisodes</label>
+      <input type="number" id="fEps" placeholder="ex: 25" min="1" />
+    </div>
+    <div class="form-group">
+      <label>Ta Note</label>
+      <div class="star-picker" id="starPicker">
+        <span onclick="setRating(1)">⭐</span>
+        <span onclick="setRating(2)">⭐</span>
+        <span onclick="setRating(3)">⭐</span>
+        <span onclick="setRating(4)">⭐</span>
+        <span onclick="setRating(5)">⭐</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+        <input type="checkbox" id="fWatched" style="width:auto" />
+        Déjà regardé ✅
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn-accent" onclick="saveAnime()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== DATA ======
+const EMOJIS = {
+  'Shonen': '⚡', 'Seinen': '🔥', 'Isekai': '🌍', 'Romance': '💕',
+  'Horreur': '👹', 'Mecha': '🤖', 'Slice of Life': '🌸', 'Autre': '🎌'
+};
+
+const MOODS = [
+  { id: 'excited', label: 'Excité', emoji: '⚡' },
+  { id: 'sad', label: 'Mélancolique', emoji: '🌧' },
+  { id: 'chill', label: 'Relaxed', emoji: '🌿' },
+  { id: 'hyped', label: 'Motivé', emoji: '🔥' },
+  { id: 'lonely', label: 'Seul', emoji: '🌙' },
+  { id: 'curious', label: 'Curieux', emoji: '🔭' },
+  { id: 'scared', label: 'Frisson', emoji: '👻' },
+  { id: 'romantic', label: 'Romantique', emoji: '💕' },
+];
+
+const CHARS = ['Introverti', 'Extraverti', 'Analytique', 'Créatif',
+  'Philosophique', 'Compétitif', 'Empathique', 'Aventurier', 'Perfectionniste'];
+
+const DEFAULT_ANIMES = [
+  { id: 1, title: 'Attack on Titan', genre: 'Seinen', episodes: 87, rating: 5, watched: true },
+  { id: 2, title: 'Demon Slayer', genre: 'Shonen', episodes: 44, rating: 5, watched: true },
+  { id: 3, title: 'Re:Zero', genre: 'Isekai', episodes: 50, rating: 4, watched: false },
+  { id: 4, title: 'Your Lie in April', genre: 'Romance', episodes: 22, rating: 5, watched: true },
+  { id: 5, title: 'Neon Genesis Evangelion', genre: 'Mecha', episodes: 26, rating: 4, watched: false },
+  { id: 6, title: 'Mushishi', genre: 'Slice of Life', episodes: 26, rating: 4, watched: false },
+];
+
+// ====== STATE ======
+let animes = JSON.parse(localStorage.getItem('animood_list') || 'null') || DEFAULT_ANIMES;
+let currentFilter = 'all';
+let selectedRating = 0;
+let selectedMood = null;
+let selectedChars = [];
+let nextId = Math.max(...animes.map(a => a.id), 0) + 1;
+
+function save() {
+  localStorage.setItem('animood_list', JSON.stringify(animes));
+}
+
+// ====== VIEWS ======
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (v === 'stats') renderStats();
+}
+
+// ====== LIST ======
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function renderList() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let list = animes.filter(a => {
+    if (currentFilter === 'Watched') return a.watched;
+    if (currentFilter !== 'all' && a.genre !== currentFilter) return false;
+    if (q && !a.title.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('animeGrid');
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="big-emoji">🌸</div>
+      <p>Aucun anime trouvé. Ajoutes-en un !</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(a => `
+    <div class="anime-card" title="${a.title}">
+      ${a.watched ? '<div class="watched-badge">✓</div>' : ''}
+      <div class="thumb" style="background:${genreGrad(a.genre)}">
+        ${EMOJIS[a.genre] || '🎌'}
+        <div class="genre-badge">${a.genre}</div>
+      </div>
+      <div class="info">
+        <h3>${a.title}</h3>
+        <div class="meta">
+          <div class="rating">⭐ ${a.rating}.0</div>
+          <div class="episodes">${a.episodes} eps</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function genreGrad(genre) {
+  const grads = {
+    'Shonen': 'linear-gradient(135deg,#f59e0b,#ef4444)',
+    'Seinen': 'linear-gradient(135deg,#1e1b4b,#7c3aed)',
+    'Isekai': 'linear-gradient(135deg,#065f46,#059669)',
+    'Romance': 'linear-gradient(135deg,#be185d,#f472b6)',
+    'Horreur': 'linear-gradient(135deg,#1c1917,#dc2626)',
+    'Mecha': 'linear-gradient(135deg,#0c4a6e,#0ea5e9)',
+    'Slice of Life': 'linear-gradient(135deg,#166534,#86efac)',
+    'Autre': 'linear-gradient(135deg,#4c1d95,#a78bfa)',
+  };
+  return grads[genre] || grads['Autre'];
+}
+
+// ====== MODAL ======
+function openModal() {
+  selectedRating = 0;
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fEps').value = '';
+  document.getElementById('fWatched').checked = false;
+  document.getElementById('modalOverlay').classList.add('open');
+  updateStars();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function setRating(r) {
+  selectedRating = r;
+  updateStars();
+}
+
+function updateStars() {
+  const stars = document.querySelectorAll('#starPicker span');
+  stars.forEach((s, i) => {
+    s.style.opacity = i < selectedRating ? '1' : '0.3';
+  });
+}
+
+function saveAnime() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { showToast('❌ Entrez un titre !'); return; }
+  if (selectedRating === 0) { showToast('⭐ Choisissez une note !'); return; }
+
+  const anime = {
+    id: nextId++,
+    title,
+    genre: document.getElementById('fGenre').value,
+    episodes: parseInt(document.getElementById('fEps').value) || 12,
+    rating: selectedRating,
+    watched: document.getElementById('fWatched').checked,
+  };
+
+  animes.unshift(anime);
+  save();
+  closeModal();
+  renderList();
+  showToast('✅ ' + title + ' ajouté !');
+}
+
+// ====== MOOD ======
+function renderMoods() {
+  document.getElementById('moodGrid').innerHTML = MOODS.map(m => `
+    <button class="mood-btn ${selectedMood === m.id ? 'selected' : ''}" onclick="selectMood('${m.id}', this)">
+      <span class="emoji">${m.emoji}</span>
+      ${m.label}
+    </button>
+  `).join('');
+}
+
+function selectMood(id, el) {
+  selectedMood = id;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function renderChars() {
+  document.getElementById('charGrid').innerHTML = CHARS.map(c => `
+    <button class="char-btn ${selectedChars.includes(c) ? 'selected' : ''}" onclick="toggleChar('${c}', this)">
+      ${c}
+    </button>
+  `).join('');
+}
+
+function toggleChar(c, el) {
+  if (selectedChars.includes(c)) {
+    selectedChars = selectedChars.filter(x => x !== c);
+    el.classList.remove('selected');
+  } else {
+    selectedChars.push(c);
+    el.classList.add('selected');
+  }
+}
+
+async function generateRecommendations() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  if (!apiKey) { showToast('🔑 Entrez votre clé API Anthropic !'); return; }
+  if (!selectedMood) { showToast('🎭 Choisissez votre mood !'); return; }
+
+  const mood = MOODS.find(m => m.id === selectedMood);
+  const myList = animes.map(a => `${a.title} (${a.genre}, ${a.rating}/5${a.watched ? ', vu' : ''})`).join(', ');
+
+  const prompt = `Tu es un expert en anime. L'utilisateur est ${selectedMood === 'excited' ? 'excité' : selectedMood === 'sad' ? 'mélancolique' : selectedMood === 'chill' ? 'relaxed' : selectedMood === 'hyped' ? 'motivé' : selectedMood === 'lonely' ? 'seul' : selectedMood === 'curious' ? 'curieux' : selectedMood === 'scared' ? 'en quête de frissons' : 'romantique'} comme mood et son caractère est : ${selectedChars.length ? selectedChars.join(', ') : 'non spécifié'}.
+
+Sa liste d'animes actuelle : ${myList || 'aucun encore'}.
+
+Propose exactement 4 animes adaptés à son mood et caractère. Pour chaque anime, donne :
+- Le nom de l'anime
+- Genre
+- Pourquoi ça correspond à son mood/caractère (1-2 phrases max)
+
+Réponds UNIQUEMENT en JSON, sans markdown, sans backticks, format :
+{"recommendations":[{"title":"...","genre":"...","emoji":"...","reason":"..."},...]}`
+
+  const btn = document.getElementById('generateBtn');
+  const output = document.getElementById('recoOutput');
+  const typing = document.getElementById('typingIndicator');
+  const content = document.getElementById('recoContent');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération en cours...';
+  output.classList.add('visible');
+  typing.style.display = 'flex';
+  content.innerHTML = '';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const text = data.content[0].text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
+
+    typing.style.display = 'none';
+    content.innerHTML = `
+      <h3>✨ Recommandations pour ton mood ${mood.emoji}</h3>
+      ${parsed.recommendations.map(r => `
+        <div class="reco-anime">
+          <div class="reco-emoji">${r.emoji || EMOJIS[r.genre] || '🎌'}</div>
+          <div class="reco-info">
+            <h4>${r.title} <span style="font-size:0.75rem;color:var(--muted);font-weight:400">${r.genre}</span></h4>
+            <p>${r.reason}</p>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (err) {
+    typing.style.display = 'none';
+    content.innerHTML = `<p style="color:var(--accent)">❌ Erreur : ${err.message}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ GÉNÉRER MES RECOMMANDATIONS';
+  }
+}
+
+// ====== STATS ======
+function renderStats() {
+  const total = animes.length;
+  const watched = animes.filter(a => a.watched).length;
+  const avgRating = total ? (animes.reduce((s, a) => s + a.rating, 0) / total).toFixed(1) : 0;
+  const totalEps = animes.reduce((s, a) => s + (a.watched ? a.episodes : 0), 0);
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Animes en liste</div></div>
+    <div class="stat-card"><div class="stat-num">${watched}</div><div class="stat-label">Regardés</div></div>
+    <div class="stat-card"><div class="stat-num">${avgRating}</div><div class="stat-label">Note moyenne</div></div>
+    <div class="stat-card"><div class="stat-num">${totalEps}</div><div class="stat-label">Épisodes vus</div></div>
+  `;
+
+  const genres = {};
+  animes.forEach(a => genres[a.genre] = (genres[a.genre] || 0) + 1);
+  const maxG = Math.max(...Object.values(genres), 1);
+
+  document.getElementById('genreBars').innerHTML = Object.entries(genres)
+    .sort((a, b) => b[1] - a[1])
+    .map(([g, c]) => `
+      <div class="genre-bar-row">
+        <div class="genre-bar-label">${EMOJIS[g] || ''} ${g}</div>
+        <div class="genre-bar-track">
+          <div class="genre-bar-fill" style="width:${(c / maxG) * 100}%"></div>
+        </div>
+        <div class="genre-bar-count">${c}</div>
+      </div>
+    `).join('');
+}
+
+// ====== TOAST ======
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ====== INIT ======
+renderList();
+renderMoods();
+renderChars();
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+</script>
+</body>
+</html>
