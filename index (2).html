@@ -215,13 +215,15 @@ nav{display:flex;gap:3px;flex-shrink:0;}
           <div class="cpills" id="cpills"></div>
         </div>
         <div class="mpanel">
-          <div class="mptitle">🔑 Clé API Anthropic</div>
+          <div class="mptitle">🔑 Clé API Google Gemini <span style="background:var(--neon3);color:#000;font-size:.6rem;padding:2px 7px;border-radius:4px;font-family:'DM Sans',sans-serif;font-weight:700;vertical-align:middle">GRATUIT</span></div>
           <div class="apirow">
-            <label>sk-ant-</label>
-            <input type="password" id="apiKey" placeholder="Votre clé ici">
+            <label>AIza</label>
+            <input type="password" id="apiKey" placeholder="...votre clé Gemini">
           </div>
-          <div style="font-size:.7rem;color:var(--muted);line-height:1.55">
-            Gratuit sur <a href="https://console.anthropic.com" target="_blank" style="color:var(--neon2)">console.anthropic.com</a> — reste dans votre navigateur uniquement.
+          <div style="font-size:.7rem;color:var(--muted);line-height:1.65">
+            1️⃣ Va sur <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--neon2)">aistudio.google.com/apikey</a><br>
+            2️⃣ Clique <b style="color:var(--text)">« Create API Key »</b><br>
+            3️⃣ Copie-colle ta clé ici — 100% gratuit, 1500 req/jour.
           </div>
           <button class="genbtn" id="genbtn" onclick="genReco()">✨ GÉNÉRER MES RECOMMANDATIONS</button>
         </div>
@@ -483,14 +485,14 @@ Recommande 5 animes adaptés qu'il n'a pas encore. Réponds UNIQUEMENT en JSON p
   const rp=document.getElementById('rpanel');
   rp.innerHTML=`<div class="rphead">✨ L'IA analyse ton profil...</div><div class="typing"><span></span><span></span><span></span></div>`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.85,maxOutputTokens:1200}})
     });
     const d=await res.json();
-    if(d.error) throw new Error(d.error.message);
-    const txt=d.content[0].text.replace(/```json|```/g,'').trim();
+    if(d.error) throw new Error(d.error.message||'Erreur Gemini');
+    const txt=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(txt);
     await renderRecos(parsed.recos,mood);
   }catch(e){rp.innerHTML=`<div class="rphead" style="color:var(--danger)">❌ ${e.message}</div>`;}
